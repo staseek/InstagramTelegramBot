@@ -1,0 +1,5 @@
+telepot
+sqlalchemy
+feedparser
+pysqlcipher3
+requests
