@@ -1,0 +1,34 @@
+---
+- hosts: all
+  tasks:
+    - name: push source code to dedic
+      synchronize:
+        src: ../..
+        dest: /tmp/InstagramoBot
+        recursive: yes
+        archive: yes
+    - name: install docker-py
+      pip:
+        name: docker-py
+      become: True
+      become_user: root
+    - name: build_docker
+      docker_image:
+        path: /tmp/InstagramoBot/InstagramoBot
+        name: stasyatr/instagramobot
+        tag: latest
+        state: present
+        volumes:
+          - "/data:/InstagramoBot/data"
+      # if error 13, persmission denied do this command on server for deploy
+      # > sudo gpasswd -a $USER docker
+      # > newgrp docker
+    - name: rerun_docker
+      docker:
+        name: instabot
+        image: stasyatr/instagramobot:latest
+        state: reloaded
+    - name: remove source code
+      file:
+        path: /tmp/InstagramoBot
+        state: absent

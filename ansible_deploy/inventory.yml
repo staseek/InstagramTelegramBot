@@ -1,0 +1,2 @@
+[deploy]
+stasyatr.ru ansible_ssh_host=stasyatr.ru ansible_ssh_user=ss ansible_ssh_port=22 ansible_ssh_private_key_file=~/.ssh/id_rsa
