@@ -148,6 +148,7 @@ def main():
             for photo in photos:
                 with open(photo.local_path, 'rb') as pf:
                     await bot.sendPhoto(chat_id=from_id, photo=pf, caption=photo.summary)
+                    await bot.sendMessage(chat_id=from_id, text=photo.summary)
                 photo.sended = True
                 session.add(photo)
                 try:

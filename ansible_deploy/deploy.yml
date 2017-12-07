@@ -18,8 +18,6 @@
         name: stasyatr/instagramobot
         tag: latest
         state: present
-        volumes:
-          - "/data:/InstagramoBot/data"
       # if error 13, persmission denied do this command on server for deploy
       # > sudo gpasswd -a $USER docker
       # > newgrp docker
@@ -28,6 +26,8 @@
         name: instabot
         image: stasyatr/instagramobot:latest
         state: reloaded
+        volumes:
+          - "/data:/InstagramoBot/data"
     - name: remove source code
       file:
         path: /tmp/InstagramoBot
