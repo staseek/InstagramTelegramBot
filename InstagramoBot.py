@@ -78,6 +78,9 @@ def main():
                 else:
                     await bot.sendMessage(chat_id, u'ЭЭЭ ТЫ КТО ТАКОЙ? ДАВАЙ ДО СВИДАНИЯ!')
             elif command.startswith('/subscriptions') and session.query(Chat).filter(Chat.chat_id == chat_id and Chat.admin == True):
+                is_succ = session.query(Chat).filter(Chat.chat_id == chat_id and Chat.admin == True).all()
+                if not is_succ:
+                    return
                 current_message = ''
                 for subscription in session.query(InstagramSubscription).all():
                     if len(current_message) > 200:

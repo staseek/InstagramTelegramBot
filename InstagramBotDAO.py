@@ -32,6 +32,10 @@ class InstagramSubscription(config.Base):
     last_check_datetime = Column(DateTime)
     subscribed = Column(Boolean)
 
+    def __str__(self):
+        import json
+        return json.dumps(self.__dict__, default=str, indent=4)
+
 
 class Chat(config.Base):
     __tablename__ = 'chats'
@@ -40,5 +44,9 @@ class Chat(config.Base):
     chat_id = Column(Integer)
     admin = Column(Boolean)
     tg_ans = Column(Text)
+
+    def __str__(self):
+        import json
+        return json.dumps(self.__dict__, default=str, indent=4)
 
 config.Base.metadata.create_all(config.engine)
