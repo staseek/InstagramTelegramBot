@@ -9,6 +9,7 @@ import InstagramFeedParserRSS
 import json
 import threading
 import config
+from sqlalchemy import and_
 from sqlalchemy import desc
 from InstagramBotDAO import *
 TOKEN = config.BOT_API_TOKEN
@@ -78,7 +79,7 @@ def main():
                 else:
                     await bot.sendMessage(chat_id, u'ЭЭЭ ТЫ КТО ТАКОЙ? ДАВАЙ ДО СВИДАНИЯ!')
             elif command.startswith('/subscriptions') and session.query(Chat).filter(Chat.chat_id == chat_id and Chat.admin == True):
-                is_succ = session.query(Chat).filter(Chat.chat_id == chat_id and Chat.admin == True).all()
+                is_succ = session.query(Chat).filter(and_(Chat.chat_id == chat_id,  Chat.admin == True)).all()
                 if not is_succ:
                     return
                 current_message = ''
@@ -90,7 +91,7 @@ def main():
                         current_message += ' ' + str(subscription.username)
 
             else:
-                is_succ =session.query(Chat).filter(Chat.chat_id == chat_id and Chat.admin == True).all()
+                is_succ = session.query(Chat).filter(and_(Chat.chat_id == chat_id, Chat.admin == True)).all()
                 if is_succ is not None and len(is_succ) > 0:
                     markup = InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text='подписаться', callback_data=json.dumps({'action': 'subscribe', 'username': command}))],
@@ -98,9 +99,10 @@ def main():
                         [InlineKeyboardButton(text='прислать последние 3 фото', callback_data=json.dumps({'action': 'last', 'username': command}))],
                         [InlineKeyboardButton(text='прислать все фото, что есть', callback_data=json.dumps({'action': 'all', 'username': command}))],
                     ])
-
                     global message_with_inline_keyboard
                     message_with_inline_keyboard = await bot.sendMessage(chat_id, 'что прикажете?', reply_markup=markup)
+                else:
+                    await bot.sendMessage(chat_id, 'Вы не администратор. Вам нельзя.')
         except Exception as e:
             logging.exception(e)
         finally:
