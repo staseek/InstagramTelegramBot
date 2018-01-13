@@ -45,6 +45,7 @@
         tag=latest
         path=/tmp/InstagramoBot
         state=present
+        force=yes
     - name: docker-compose up
       docker_service:
         build: yes

@@ -26,7 +26,7 @@ def main():
                 for pic_to_send in pics_to_send:
                     with open(pic_to_send.local_path, 'rb') as picf:
                         for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
-                            current_text = '{} {} '.format(pic_to_send.username, pic_to_send.summary)
+                            current_text = '/{} {} '.format(pic_to_send.username, pic_to_send.summary)
                             await bot.sendPhoto(chat_id=chat_id, photo=picf, caption=current_text)
                             await bot.sendMessage(chat_id=chat_id, text=current_text)
                     pic_to_send.sended = True
@@ -92,6 +92,8 @@ def main():
 
             else:
                 is_succ = session.query(Chat).filter(and_(Chat.chat_id == chat_id, Chat.admin == True)).all()
+                if command.startswith('/'):
+                    command = command[1:]
                 if is_succ is not None and len(is_succ) > 0:
                     markup = InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text='подписаться', callback_data=json.dumps({'action': 'subscribe', 'username': command}))],
