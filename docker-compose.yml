@@ -6,3 +6,4 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /data:/InstagramoBot/data
+    restart: always
