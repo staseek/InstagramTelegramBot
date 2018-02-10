@@ -1,3 +1,5 @@
 .idea
+*.retry
 __pycache__
 config_local.py
+data

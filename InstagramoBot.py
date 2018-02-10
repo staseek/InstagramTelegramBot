@@ -94,7 +94,11 @@ def main():
                 is_succ = session.query(Chat).filter(and_(Chat.chat_id == chat_id, Chat.admin == True)).all()
                 if command.startswith('/'):
                     command = command[1:]
-                if is_succ is not None and len(is_succ) > 0:
+                infomation_about_user = await InstagramFeedParserRSS.get_info(command)
+                if infomation_about_user is None:
+                    await bot.sendMessage(chat_id, "Проблема с пользователем {} его rss-лента не парсится".format(command))
+                elif is_succ is not None and len(is_succ) > 0:
+                    await bot.sendMessage(chat_id, infomation_about_user)
                     markup = InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text='подписаться', callback_data=json.dumps({'action': 'subscribe', 'username': command}))],
                         [InlineKeyboardButton(text='отписаться', callback_data=json.dumps({'action': 'unsubscribe', 'username': command}))],

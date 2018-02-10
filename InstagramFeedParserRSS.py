@@ -75,6 +75,19 @@ async def parse_user(username):
     await parse_feed(username, 'https://web.stagram.com/rss/n/{}'.format(username), current_user_directory)
 
 
+async def get_info(username):
+    try:
+        feed = feedparser.parse('https://web.stagram.com/rss/n/{}'.format(username))
+        if feed is None or feed['bozo'] == 1 or 'bozo_exception' in feed:
+            return None
+        else:
+            return "Заголовок ленты: {}, страница {}"\
+                .format(feed['feed']['title'] if 'feed' in feed and 'title' in feed['feed'] else None,
+                        'публичная, есть фото' if 'entries' in feed and len(feed['entries']) > 0 else 'приватная или пустая')
+    except Exception as e:
+        return None
+
+
 class InstagramRssParser:
 
     async def _scrape(self, username):

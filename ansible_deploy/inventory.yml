@@ -1,2 +1,2 @@
 [deploy]
-vpn.new.stasyatr.ru ansible_ssh_host=vpn.new.stasyatr.ru ansible_ssh_user=ss ansible_ssh_port=2202 ansible_ssh_private_key_file=~/.ssh/id_rsa
+stasyatr.ru ansible_ssh_host=instagrambot.stasyatr.ru ansible_ssh_user=ss ansible_ssh_port=2202 ansible_ssh_private_key_file=~/.ssh/id_rsa
