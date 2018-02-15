@@ -27,7 +27,8 @@ def main():
                     with open(pic_to_send.local_path, 'rb') as picf:
                         for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
                             current_text = '/{} {} '.format(pic_to_send.username, pic_to_send.summary)
-                            await bot.sendPhoto(chat_id=chat_id, photo=picf, caption=current_text)
+                            short_text = '/{} photo'.format(pic_to_send.username)
+                            await bot.sendPhoto(chat_id=chat_id, photo=picf, caption=short_text)
                             await bot.sendMessage(chat_id=chat_id, text=current_text)
                     pic_to_send.sended = True
                     session.add(pic_to_send)
