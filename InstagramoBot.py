@@ -19,7 +19,41 @@ TOKEN = config.BOT_API_TOKEN
 def main():
     message_with_inline_keyboard = None
 
-    async def send_pictures():
+    async def send_media_instaloader():
+        while True:
+            session = config.Session()
+            try:
+                pics_to_send = session.query(InstagramImageNoRss).filter(InstagramImageNoRss.sended == False).all()
+                for pic_to_send in pics_to_send:
+                    with open(pic_to_send.local_path, 'rb') as mediaf:
+                        for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
+                            if pic_to_send.local_path.endswith('.jpg'):
+                                logging.info('sending photo')
+                                await bot.sendPhoto(chat_id=chat_id, photo=mediaf, caption="/{} from instaloader".format(pic_to_send.username))
+                                logging.info('sended photo')
+                            elif pic_to_send.local_path.endswith('.mp4'):
+                                logging.info('sending video')
+                                await bot.sendVideo(chat_id=chat_id, video=mediaf, caption="/{} from instaloader".format(pic_to_send.username))
+                                logging.info('sended video')
+                            else:
+                                await bot.sendMessage(chat_id=chat_id, text='Not understand type please debug me. {}'.format(pic_to_send))
+                                continue
+                            if pic_to_send.text_data is not None and len(pic_to_send.text_data) > 0:
+                                await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with text {}'.format(pic_to_send.username, pic_to_send.text_data))
+                            session.add(pic_to_send)
+                            try:
+                                session.commit()
+                            except Exception as e:
+                                logging.exception(e)
+                                session.rollback()
+
+            except Exception as e:
+                logging.exception(e)
+            finally:
+                session.close()
+            await asyncio.sleep(config.TIME_SLEEP_SENDER)
+
+    async def send_pictures_rss():
         while True:
             session = config.Session()
             try:
@@ -27,8 +61,8 @@ def main():
                 for pic_to_send in pics_to_send:
                     with open(pic_to_send.local_path, 'rb') as picf:
                         for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
-                            current_text = '/{} {} '.format(pic_to_send.username, pic_to_send.summary)
-                            short_text = '/{} photo'.format(pic_to_send.username)
+                            current_text = '/{} from RSS feed with text: {} '.format(pic_to_send.username, pic_to_send.summary)
+                            short_text = '/{} from RSS feed photo'.format(pic_to_send.username)
                             await bot.sendPhoto(chat_id=chat_id, photo=picf, caption=short_text)
                             await bot.sendMessage(chat_id=chat_id, text=current_text)
                     pic_to_send.sended = True
@@ -104,8 +138,12 @@ def main():
                     markup = InlineKeyboardMarkup(inline_keyboard=[
                         [InlineKeyboardButton(text='подписаться', callback_data=json.dumps({'action': 'subscribe', 'username': command}))],
                         [InlineKeyboardButton(text='отписаться', callback_data=json.dumps({'action': 'unsubscribe', 'username': command}))],
-                        [InlineKeyboardButton(text='прислать последние 3 фото', callback_data=json.dumps({'action': 'last', 'username': command}))],
-                        [InlineKeyboardButton(text='прислать все фото, что есть', callback_data=json.dumps({'action': 'all', 'username': command}))],
+                        [InlineKeyboardButton(text='прислать последние 3 фото RSS ленты', callback_data=json.dumps({'action': 'last', 'username': command}))],
+                        [InlineKeyboardButton(text='прислать все фото, что есть RSS', callback_data=json.dumps({'action': 'all', 'username': command}))],
+                        [InlineKeyboardButton(text='прислать последние 3 фото Instaloader',
+                                              callback_data=json.dumps({'action': 'last', 'username': command}))],
+                        [InlineKeyboardButton(text='прислать все фото, что есть Instaloader',
+                                              callback_data=json.dumps({'action': 'all', 'username': command}))],
                     ])
                     global message_with_inline_keyboard
                     message_with_inline_keyboard = await bot.sendMessage(chat_id, 'что прикажете?', reply_markup=markup)
@@ -142,19 +180,20 @@ def main():
                 try:
                     session.commit()
                 except Exception as e:
+                    logging.exception(e)
                     session.rollback()
-            elif data['action'] == 'last':
+            elif data['action'] == 'last_rss':
                 photos = session.query(InstgaramImageRss).filter(InstgaramImageRss.username == data['username']).order_by(desc(InstgaramImageRss.published)).limit(3).all()
-                await send_photos(from_id, photos, session)
-            elif data['action'] == 'all':
+                await send_rss_photos(from_id, photos, session)
+            elif data['action'] == 'all_rss':
                 photos = session.query(InstgaramImageRss).filter(InstgaramImageRss.username == data['username']).order_by(InstgaramImageRss.published).all()
-                await send_photos(from_id, photos, session)
+                await send_rss_photos(from_id, photos, session)
         except Exception as e:
             logging.exception(e)
         finally:
             session.close()
 
-    async def send_photos(from_id, photos, session):
+    async def send_rss_photos(from_id, photos, session):
         if photos is None or len(photos) == 0:
             await bot.sendMessage(from_id, 'Нет фото')
         else:
@@ -183,12 +222,13 @@ def main():
     loop.create_task(MessageLoop(bot, {'chat': on_chat_message,
                                        'callback_query': on_callback_query,
                                        'chosen_inline_result': on_chosen_inline_result}).run_forever())
-    loop.create_task(send_pictures())
-    loop.create_task(rss_parser.run())
+    loop.create_task(send_pictures_rss())
+    loop.create_task(send_media_instaloader())
+    # loop.create_task(rss_parser.run())
     # instaloader threads
     instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
     instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
-    loop.create_task(instloader.run())
+    #loop.create_task(instloader.run())
     loop.create_task(instregister.run())
     loop.run_forever()
 
