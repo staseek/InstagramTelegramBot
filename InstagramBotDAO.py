@@ -3,6 +3,24 @@ import uuid
 from sqlalchemy import Column, Integer, DateTime, Text, Boolean
 
 
+class InstagramImageNoRss(config.Base):
+    __tablename__ = 'instagram_image_norss'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = Column(Text, primary_key=True, default=lambda: uuid.uuid4().hex)
+    local_path = Column(Text)
+    local_path_txt = Column(Text)
+    local_path_json = Column(Text)
+    comments_path = Column(Text)
+    geolocation_path = Column(Text)
+    text_data = Column(Text)
+    json_data = Column(Text)
+    comments_data = Column(Text)
+    geolocation_data = Column(Text)
+    username = Column(Text)
+    sended = Column(Boolean)
+    published = Column(DateTime)
+
+
 class InstgaramImageRss(config.Base):
     __tablename__ = 'instagram_image_rss'
     __table_args__ = {'sqlite_autoincrement': True}
