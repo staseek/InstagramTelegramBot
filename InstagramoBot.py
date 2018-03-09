@@ -30,15 +30,15 @@ def main():
                                 logging.info('sended photo')
                             elif pic_to_send.local_path.endswith('.mp4'):
                                 logging.info('sending video')
-                                await bot.sendVideo(chat_id=chat_id, video=mediaf, caption="/{} from instaloader".format(pic_to_send.username))
+                                await bot.sendVideo(chat_id=chat_id, video=mediaf, caption="/{} index={} from instaloader".format(pic_to_send.username, pic_to_send.text_data))
                                 logging.info('sended video')
                             else:
                                 await bot.sendMessage(chat_id=chat_id, text='Not understand type please debug me. {}'.format(pic_to_send))
                                 continue
                             if pic_to_send.text_data is not None and len(pic_to_send.text_data) > 0:
-                                await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with text {}'.format(pic_to_send.username, pic_to_send.text_data))
+                                await bot.sendMessage(chat_id=chat_id, text='/{} index={} from instaloader with text {}'.format(pic_to_send.username, pic_to_send.publication_index, pic_to_send.text_data))
                             if config.SEND_JSON_DATA and pic_to_send.json_data is not None and len(pic_to_send.json_data) > 0:
-                                await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with json data\n{}'.format(pic_to_send.username, json.dumps(json.loads(pic_to_send.json_data), indent=4)))
+                                await bot.sendMessage(chat_id=chat_id, text='/{} index={}from instaloader with json data\n{}'.format(pic_to_send.username, pic_to_send.text_data, json.dumps(json.loads(pic_to_send.json_data), indent=4)))
                             if pic_to_send.geolocation_data is not None and len(pic_to_send.geolocation_data) > 0:
                                 geo = pic_to_send.geolocation_data
                                 await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with geolocation data\n{}'.format(pic_to_send.username, geo))
@@ -54,6 +54,14 @@ def main():
                                         await bot.sendPhoto(chat_id=chat_id, photo=cf, caption='/{} with geolocation at {}'.format(pic_to_send.username, zoom))
                                     os.remove(current_tmp_filename)
                                     await asyncio.sleep(.2)
+                            if pic_to_send.comments_data is not None and len(pic_to_send.comments_data):
+                                for comment in json.loads(pic_to_send.comments_data):
+                                    await bot.sendMessage(chat_id=chat_id, text='/{} комментарий от {} запощен в {} с текстом:\n{}'
+                                                          .format(pic_to_send.username,
+                                                                  comment['owner']['username'],
+                                                                  datetime.datetime.fromtimestamp(int(comment['created_at'])).strftime('%Y-%m-%d %H:%M:%S'),
+                                                                  comment['text']))
+                            pic_to_send.sended = True
                             session.add(pic_to_send)
                             try:
                                 session.commit()
@@ -238,11 +246,11 @@ def main():
                                        'chosen_inline_result': on_chosen_inline_result}).run_forever())
     loop.create_task(send_pictures_rss())
     loop.create_task(send_media_instaloader())
-    # loop.create_task(rss_parser.run())
+    loop.create_task(rss_parser.run())
     # instaloader threads
     instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
     instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
-    #loop.create_task(instloader.run())
+    loop.create_task(instloader.run())
     loop.create_task(instregister.run())
     loop.run_forever()
 
