@@ -1,14 +1,11 @@
-import re
-import asyncio
-import logging
 import telepot
 import telepot.aio
 from telepot.aio.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 import InstagramFeedParserRSS
-import json
-import threading
-import config
+import re
+import Utils
+import tempfile
 from sqlalchemy import and_
 from sqlalchemy import desc
 from InstagramBotDAO import *
@@ -40,6 +37,23 @@ def main():
                                 continue
                             if pic_to_send.text_data is not None and len(pic_to_send.text_data) > 0:
                                 await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with text {}'.format(pic_to_send.username, pic_to_send.text_data))
+                            if config.SEND_JSON_DATA and pic_to_send.json_data is not None and len(pic_to_send.json_data) > 0:
+                                await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with json data\n{}'.format(pic_to_send.username, json.dumps(json.loads(pic_to_send.json_data), indent=4)))
+                            if pic_to_send.geolocation_data is not None and len(pic_to_send.geolocation_data) > 0:
+                                geo = pic_to_send.geolocation_data
+                                await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with geolocation data\n{}'.format(pic_to_send.username, geo))
+                                geo_parsed = re.search('http(s)?:\/\/maps.google.com\/maps\?q=(?P<longitude>(\d|\.)+)\,(?P<latitude>(\d|\.)+)&.*', geo)
+                                longitude = geo_parsed.group('longitude')
+                                latitude = geo_parsed.group('latitude')
+                                for zoom in range(0,18,3):
+                                    current_url = 'https://static-maps.yandex.ru/1.x/?ll={},{}&size=450,450&z={}&l=map&pt={},{}'.format(latitude, longitude, zoom, latitude, longitude)
+                                    current_tmp_filename = os.path.join(tempfile._get_default_tempdir(),
+                                                                    next(tempfile._get_candidate_names()))
+                                    await Utils.download(current_url, path=current_tmp_filename)
+                                    with open(current_tmp_filename, 'rb') as cf:
+                                        await bot.sendPhoto(chat_id=chat_id, photo=cf, caption='/{} with geolocation at {}'.format(pic_to_send.username, zoom))
+                                    os.remove(current_tmp_filename)
+                                    await asyncio.sleep(.2)
                             session.add(pic_to_send)
                             try:
                                 session.commit()
