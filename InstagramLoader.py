@@ -3,7 +3,12 @@ import config
 import multiprocessing
 import asyncio
 import logging
-from InstagramBotDAO import InstagramSubscription
+import os
+import re
+from collections import defaultdict
+import datetime
+import json
+from InstagramBotDAO import InstagramSubscription, InstagramImageNoRss
 
 
 class InstagramLoader:
@@ -66,12 +71,85 @@ class InstagramLoader:
             logging.info('waking up')
 
 
+class InstagramLoaderRegistering:
+    def __init__(self, folder_path):
+        self.folder_for_registering = folder_path
+
+    def register(self):
+        session = config.Session()
+        try:
+            for username in os.listdir(self.folder_for_registering):
+                current_directory = os.path.join(self.folder_for_registering, username)
+                filepaths = set([])
+                date_to_files = defaultdict(list)
+                for file in os.listdir(current_directory):
+                    current_filepath = os.path.join(current_directory, file)
+                    filepaths.add(current_filepath)
+                    parsed_filename = re.search('(?P<date>.*)_UTC(_((?P<index>\d+)|(?P<type>[\w|_]+)))?\.(?P<extension>jpg|json|txt|mp4)', file)
+                    if not parsed_filename:
+                        logging.warning('ignored file = {}'.format(current_filepath))
+                        continue
+                    filetype = parsed_filename.group('extension')
+                    if filetype not in ['jpg', 'mp4']:
+                        continue
+                    current_filedate = parsed_filename.group('date')
+                    current_filedatedate = datetime.datetime.strptime(current_filedate, "%Y-%m-%d_%H-%M-%S")
+                    index = parsed_filename.group('index') or 1
+                    ret = session.query(InstagramImageNoRss).\
+                        filter(InstagramImageNoRss.publication_index==index).\
+                        filter(InstagramImageNoRss.username==username).\
+                        filter(InstagramImageNoRss.local_path==current_filepath).\
+                        filter(InstagramImageNoRss.published==current_filedatedate).all()
+                    if ret and len(ret) > 0:
+                        continue
+                    current_db_object = InstagramImageNoRss()
+                    current_db_object.username = username
+                    current_db_object.local_path = current_filepath
+                    current_db_object.published = current_filedatedate
+                    local_path_txt = os.path.join(current_directory, current_filedate + '_UTC.txt')
+                    if os.path.exists(local_path_txt):
+                        current_db_object.local_path_txt = local_path_txt
+                        with open(local_path_txt, 'r', encoding='utf8') as localtxtf:
+                            current_db_object.text_data = '\n'.join(localtxtf.readlines())
+                    local_path_json = os.path.join(current_directory, current_filedate + '_UTC.json')
+                    if os.path.exists(local_path_json):
+                        current_db_object.local_path_json = local_path_json
+                        with open(local_path_json, 'r', encoding='utf8') as localjsonf:
+                            current_db_object.json_data = json.dumps(json.loads(' '.join(localjsonf.readlines())))
+                    comments_path = os.path.join(current_directory, current_filedate + '_UTC_comments.json')
+                    if os.path.exists(comments_path):
+                        current_db_object.comments_path = comments_path
+                        with open(comments_path, 'r', encoding='utf8') as commentsjsonf:
+                            current_db_object.comments_data = json.dumps(json.loads(' '.join(commentsjsonf.readlines())))
+                    current_db_object.sended = False
+                    current_db_object.publication_index = index
+                    print(filetype, current_db_object)
+        except Exception as e:
+            logging.exception(e)
+        finally:
+            session.close()
+
+    async def run(self):
+        logging.info('starting instaloader registering')
+        while True:
+            session = config.Session()
+            try:
+                self.register()
+            except Exception as e:
+                logging.exception(e)
+            finally:
+                session.close()
+            logging.info('sleeping instaloader registering...')
+            await asyncio.sleep(config.TIME_SLEEP_REGISTER)
+            logging.info('waking up registering')
+
+
 def main():
     instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
-    # res = instloader.scrape('nataliecheee')
-    # print('res', res)
+    instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
     loop = asyncio.get_event_loop()
-    loop.create_task(instloader.run())
+    # loop.create_task(instloader.run())
+    loop.create_task(instregister.run())
     loop.run_forever()
 
 

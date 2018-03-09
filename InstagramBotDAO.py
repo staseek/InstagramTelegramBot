@@ -19,6 +19,11 @@ class InstagramImageNoRss(config.Base):
     username = Column(Text)
     sended = Column(Boolean)
     published = Column(DateTime)
+    publication_index = Column(Integer)
+
+    def __str__(self):
+        import json
+        return json.dumps(self.__dict__, default=str)
 
 
 class InstgaramImageRss(config.Base):

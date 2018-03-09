@@ -25,4 +25,4 @@ Session = sessionmaker(bind=engine)
 
 TIME_SLEEP = 5 * 60
 TIME_SLEEP_SENDER = 30
-
+TIME_SLEEP_REGISTER = 30
