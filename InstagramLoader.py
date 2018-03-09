@@ -121,9 +121,19 @@ class InstagramLoaderRegistering:
                         current_db_object.comments_path = comments_path
                         with open(comments_path, 'r', encoding='utf8') as commentsjsonf:
                             current_db_object.comments_data = json.dumps(json.loads(' '.join(commentsjsonf.readlines())))
+                    location_path = os.path.join(current_directory, current_filedate + '_UTC_location.txt')
+                    if os.path.exists(location_path):
+                        current_db_object.geolocation_path = location_path
+                        with open(location_path, 'r', encoding='utf8') as locationf:
+                            current_db_object.geolocation_data = '\n'.join(locationf.readlines())
                     current_db_object.sended = False
                     current_db_object.publication_index = index
-                    print(filetype, current_db_object)
+                    session.add(current_db_object)
+                    try:
+                        session.commit()
+                    except Exception as e:
+                        logging.exception(e)
+                        session.rollback()
         except Exception as e:
             logging.exception(e)
         finally:
@@ -144,14 +154,14 @@ class InstagramLoaderRegistering:
             logging.info('waking up registering')
 
 
-def main():
-    instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
-    instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
-    loop = asyncio.get_event_loop()
-    # loop.create_task(instloader.run())
-    loop.create_task(instregister.run())
-    loop.run_forever()
+# def main():
+#     instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
+#     instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
+#     loop = asyncio.get_event_loop()
+#     # loop.create_task(instloader.run())
+#     loop.create_task(instregister.run())
+#     loop.run_forever()
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

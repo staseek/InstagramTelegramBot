@@ -12,6 +12,7 @@ import config
 from sqlalchemy import and_
 from sqlalchemy import desc
 from InstagramBotDAO import *
+from InstagramLoader import *
 TOKEN = config.BOT_API_TOKEN
 
 
@@ -184,7 +185,13 @@ def main():
                                        'chosen_inline_result': on_chosen_inline_result}).run_forever())
     loop.create_task(send_pictures())
     loop.create_task(rss_parser.run())
+    # instaloader threads
+    instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
+    instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
+    loop.create_task(instloader.run())
+    loop.create_task(instregister.run())
     loop.run_forever()
+
 
 if __name__ == "__main__":
     main()
