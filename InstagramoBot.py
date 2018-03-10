@@ -38,7 +38,7 @@ def main():
                             if pic_to_send.text_data is not None and len(pic_to_send.text_data) > 0:
                                 await bot.sendMessage(chat_id=chat_id, text='/{} index={} from instaloader with text {}'.format(pic_to_send.username, pic_to_send.publication_index, pic_to_send.text_data))
                             if config.SEND_JSON_DATA and pic_to_send.json_data is not None and len(pic_to_send.json_data) > 0:
-                                await bot.sendMessage(chat_id=chat_id, text='/{} index={}from instaloader with json data\n{}'.format(pic_to_send.username, pic_to_send.text_data, json.dumps(json.loads(pic_to_send.json_data), indent=4)))
+                                await bot.sendMessage(chat_id=chat_id, text='/{} index={}from instaloader with json data\n{}'.format(pic_to_send.username, pic_to_send.text_data, json.dumps(json.loads(pic_to_send.json_data), indent=4))[:4000])
                             if pic_to_send.geolocation_data is not None and len(pic_to_send.geolocation_data) > 0:
                                 geo = pic_to_send.geolocation_data
                                 await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with geolocation data\n{}'.format(pic_to_send.username, geo))
