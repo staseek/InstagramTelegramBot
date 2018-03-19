@@ -24,6 +24,7 @@ engine = create_engine('sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_it
 Session = sessionmaker(bind=engine)
 
 TIME_SLEEP = 5 * 60
+TIME_SLEEP_INSTALOADER_PARSER = 10 * 60
 TIME_SLEEP_SENDER = 30
 TIME_SLEEP_REGISTER = 30
 

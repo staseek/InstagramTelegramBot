@@ -72,4 +72,5 @@ class Chat(config.Base):
         import json
         return json.dumps(self.__dict__, default=str, indent=4)
 
+#InstagramImageNoRss.__table__.drop()
 config.Base.metadata.create_all(config.engine)

@@ -3,6 +3,7 @@ import telepot.aio
 from telepot.aio.loop import MessageLoop
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 import InstagramFeedParserRSS
+import traceback
 import re
 import Utils
 import tempfile
@@ -43,17 +44,18 @@ def main():
                                 geo = pic_to_send.geolocation_data
                                 await bot.sendMessage(chat_id=chat_id, text='/{} from instaloader with geolocation data\n{}'.format(pic_to_send.username, geo))
                                 geo_parsed = re.search('http(s)?:\/\/maps.google.com\/maps\?q=(?P<longitude>(\d|\.)+)\,(?P<latitude>(\d|\.)+)&.*', geo)
-                                longitude = geo_parsed.group('longitude')
-                                latitude = geo_parsed.group('latitude')
-                                for zoom in range(0,18,3):
-                                    current_url = 'https://static-maps.yandex.ru/1.x/?ll={},{}&size=450,450&z={}&l=map&pt={},{}'.format(latitude, longitude, zoom, latitude, longitude)
-                                    current_tmp_filename = os.path.join(tempfile._get_default_tempdir(),
-                                                                    next(tempfile._get_candidate_names()))
-                                    await Utils.download(current_url, path=current_tmp_filename)
-                                    with open(current_tmp_filename, 'rb') as cf:
-                                        await bot.sendPhoto(chat_id=chat_id, photo=cf, caption='/{} with geolocation at {}'.format(pic_to_send.username, zoom))
-                                    os.remove(current_tmp_filename)
-                                    await asyncio.sleep(.2)
+                                if geo_parsed:
+                                    longitude = geo_parsed.group('longitude')
+                                    latitude = geo_parsed.group('latitude')
+                                    for zoom in range(0,18,3):
+                                        current_url = 'https://static-maps.yandex.ru/1.x/?ll={},{}&size=450,450&z={}&l=map&pt={},{}'.format(latitude, longitude, zoom, latitude, longitude)
+                                        current_tmp_filename = os.path.join(tempfile._get_default_tempdir(),
+                                                                        next(tempfile._get_candidate_names()))
+                                        await Utils.download(current_url, path=current_tmp_filename)
+                                        with open(current_tmp_filename, 'rb') as cf:
+                                            await bot.sendPhoto(chat_id=chat_id, photo=cf, caption='/{} with geolocation at {}'.format(pic_to_send.username, zoom))
+                                        os.remove(current_tmp_filename)
+                                        await asyncio.sleep(.2)
                             if pic_to_send.comments_data is not None and len(pic_to_send.comments_data):
                                 for comment in json.loads(pic_to_send.comments_data):
                                     await bot.sendMessage(chat_id=chat_id, text='/{} комментарий от {} запощен в {} с текстом:\n{}'
@@ -71,6 +73,8 @@ def main():
 
             except Exception as e:
                 logging.exception(e)
+                for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
+                    await bot.sendMessage(chat_id=chat_id, text='Exception {} with {}'.format(str(e), traceback.format_exc()))
             finally:
                 session.close()
             await asyncio.sleep(config.TIME_SLEEP_SENDER)
@@ -96,6 +100,8 @@ def main():
                         session.rollback()
             except Exception as e:
                 logging.exception(e)
+                for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
+                    await bot.sendMessage(chat_id=chat_id, text='Exception {} with {}'.format(str(e), traceback.format_exc()))
             finally:
                 session.close()
             await asyncio.sleep(config.TIME_SLEEP_SENDER)
@@ -173,6 +179,9 @@ def main():
                     await bot.sendMessage(chat_id, 'Вы не администратор. Вам нельзя.')
         except Exception as e:
             logging.exception(e)
+            for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
+                await bot.sendMessage(chat_id=chat_id,
+                                      text='Exception {} with {}'.format(str(e), traceback.format_exc()))
         finally:
             session.close()
 
@@ -212,6 +221,9 @@ def main():
                 await send_rss_photos(from_id, photos, session)
         except Exception as e:
             logging.exception(e)
+            for chat_id in [x.chat_id for x in session.query(Chat).filter(Chat.admin == True).all()]:
+                await bot.sendMessage(chat_id=chat_id,
+                                      text='Exception {} with {}'.format(str(e), traceback.format_exc()))
         finally:
             session.close()
 
@@ -248,10 +260,10 @@ def main():
     loop.create_task(send_media_instaloader())
     loop.create_task(rss_parser.run())
     # instaloader threads
-    instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
-    instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
-    loop.create_task(instloader.run())
-    loop.create_task(instregister.run())
+    # instloader = InstagramLoader(config.INSTAGRAM_PARSER_LOGIN, config.INSTAGRAM_PARSER_PASSW)
+    # instregister = InstagramLoaderRegistering(config.DATA_DIRECTORY_NO_RSS)
+    # loop.create_task(instloader.run())
+    # loop.create_task(instregister.run())
     loop.run_forever()
 
 

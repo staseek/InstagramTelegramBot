@@ -67,7 +67,7 @@ class InstagramLoader:
             finally:
                 session.close()
             logging.info('sleeping...')
-            await asyncio.sleep(config.TIME_SLEEP)
+            await asyncio.sleep(config.TIME_SLEEP_INSTALOADER_PARSER)
             logging.info('waking up')
 
 
