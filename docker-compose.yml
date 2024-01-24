@@ -1,9 +1,0 @@
-version: "2"
-services:
-  openvpn:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - /data:/InstagramoBot/data
-    restart: always
