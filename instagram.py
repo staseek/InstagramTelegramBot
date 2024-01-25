@@ -1,5 +1,6 @@
 from instagrapi import Client
 from pathlib import Path
+import config
 
 class SessionStorage:
     def __init__(self):
@@ -18,4 +19,4 @@ class InstagramModule:
 
 
 if __name__ == "__main__":
-    instagram_module = InstagramModule()
+    instagram_module = InstagramModule(config.LOGIN, config.PASSWORD)
